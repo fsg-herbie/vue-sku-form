@@ -69,13 +69,16 @@ new Vue({
     el: "#{{$name}}-wrapper",
     data(){
         return {
-            initDataStr:'{!!old($column, $value) ?? config('vue_sku_form.initDataStr')!!} ',
+            initDataStr:'{!! empty(old($column, $value)) ? config('vue_sku_form.initDataStr') : old($column, $value) !!} ',
             initDataObj:{},
             skuData:[]
         };
     },
     mounted(){
         this.initDataObj = JSON.parse(this.initDataStr);
+        if (this.initDataObj.types == 'many'){
+            this.manyFormat();
+        }
     },
     methods:{
         singleFormat(){
@@ -88,6 +91,8 @@ new Vue({
                     name:"示例名",items:["示例值"]
                 }];
                 this.updateSkuData();
+            }else {
+                this.skuData = this.initDataObj.sku;
             }
         },
         //添加规格
