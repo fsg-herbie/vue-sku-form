@@ -1,0 +1,93 @@
+<div class="form-group {!! !$errors->has($label) ?: 'has-error' !!}" >
+    <label for="{{$id}}" class="col-sm-2 control-label" >{{$label}}</label>
+    <div class="col-sm-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <span style="color: red;">
+            @include('admin::form.error')
+        </span>
+        <div class="sku_warp sku_data">
+            <div id="{{$name}}-wrapper">
+                <el-row>
+                    <el-button :type="initDataObj.types=='single'?'success':'info'" v-on:click="singleFormat">单规格</el-button>
+                    <el-button :type="initDataObj.types=='many'?'success':'info'" v-on:click="manyFormat">多规格</el-button>
+                </el-row>
+
+                <el-row style="margin-top: 15px;" v-if="initDataObj.types=='many'">
+                    <sku-form ref="skuForm" :source-attribute="initDataObj.sourceAttribute"
+                              :attribute.sync="initDataObj.attribute"
+                              :sku.sync="initDataObj.sku"
+                              :structure="initDataObj.structure" :theme="2">
+                        <template slot="image" slot-scope="slotProps" style="display: block !important;">
+                            <div class="image-upload-container">
+                                <el-image v-if="slotProps.row.image" :src="slotProps.row.image" :preview-src-list="[slotProps.row.image]" fit="cover" title="点击预览" />
+                                <el-upload :show-file-list="false" action="http://scrm.1daas.com/api/upload/upload" name="image" :on-success="res => imageUpload(res, slotProps)" class="images-upload">
+                                    <el-button size="small" icon="el-icon-upload2">@{{ slotProps.row.image ? '重传' : '上传' }}</el-button>
+                                </el-upload>
+                            </div>
+                        </template>
+                    </sku-form>
+                </el-row>
+                <div class="input-group">
+                    <input type="hidden" name="{{$name}}" :value="JSON.stringify(initDataObj)" class="form-control title" placeholder="{{$label}}">
+                </div>
+            </div>
+        </div>
+        @include('admin::form.help-block')
+    </div>
+</div>
+<script>
+new Vue({
+    el: "#{{$name}}-wrapper",
+    components: {
+        'sku-form': SkuForm.default,
+    },
+    data(){
+        return {
+            initDataStr:'{!!old($column, $value) ?? '{"types":"single","sourceAttribute":[],"attribute":[],"structure":[{"name":"image","type":"slot","label":"图片","required":"true"},{"name":"original_price","type":"input","label":"原价","required":"true"},{"name":"sale_price","type":"input","label":"销售价","required":"true"},{"name":"proxy_price","type":"input","label":"代理价","required":"true"}, {"name":"stock_count","type":"input","label":"库存","required":"true"}],"sku":[]}'!!} ',
+            initDataObj:{},
+        };
+    },
+    mounted(){
+        this.initDataObj = JSON.parse(this.initDataStr);
+    },
+    methods:{
+        singleFormat(){
+            this.initDataObj.types = 'single'
+        },
+        manyFormat(){
+            this.initDataObj.types = 'many';
+            if (this.initDataObj.sourceAttribute.length <= 0){
+                this.initDataObj.sourceAttribute = [{
+                    name:"示例名",item:["示例值"]
+                }];
+            }
+        },
+        // 图片上传
+        imageUpload(res, data) {
+            // 这里会返回上传结果，提取出图片地址url
+            console.log(res)
+            // 模拟返回数据
+            let imagePath = 'http://images.lookbi.com/uploads/apply/166/e2e1b23647d67df2655d5e6bed76670c.jpg'
+            data.row.image = imagePath;
+            this.$message.success('图片上传成功');
+            this.$refs.skuForm.validateFieldByRows(data.$index, 'image', () => {})
+        },
+        add_attr_name(index){
+            this.initDataObj.sourceAttribute.push({name:"示例名",items:["示例值"]});
+        },
+        remove_attr_name(row_index){
+            this.initDataObj.attrs.splice(row_index, 1);
+            var skuData = this.initDataObj.sku;
+            skuData.forEach((item,index) => {
+                if (item.attr_index == row_index){
+                    this.initDataObj.sku.splice(index,1);
+                }
+            })
+        },
+        add_attr_item(row_index,items_index){
+        },
+        remove_attr_item(row_index,items_index){
+        },
+    }
+});
+</script>

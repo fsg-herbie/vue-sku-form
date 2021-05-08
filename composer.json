@@ -1,9 +1,9 @@
 {
-    "name": "fsg-herbie/vue-suk-form",
+    "name": "fsg-herbie/vue-sku-form",
     "description": "laravel admin 扩展商城SKU 基于element",
     "type": "library",
     "keywords": ["laravel-admin", "extension","vue","sku"],
-    "homepage": "https://github.com/fsg-herbie/vue-suk-form",
+    "homepage": "https://github.com/fsg-herbie/vue-sku-form",
     "license": "MIT",
     "authors": [
         {

@@ -1,0 +1,169 @@
+<div class="form-group {!! !$errors->has($label) ?: 'has-error' !!}" >
+    <label for="{{$id}}" class="col-sm-2 control-label" >{{$label}}</label>
+    <div class="col-sm-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <span style="color: red;">
+            @include('admin::form.error')
+        </span>
+        <div class="sku_warp sku_data">
+            <div id="{{$name}}-wrapper">
+                <el-row>
+                    <el-button :type="initDataObj.types=='single'?'success':'info'" v-on:click="singleFormat">单规格</el-button>
+                    <el-button :type="initDataObj.types=='many'?'success':'info'" v-on:click="manyFormat">多规格</el-button>
+                </el-row>
+
+                <el-row style="margin-top: 15px;" v-if="initDataObj.types=='many'">
+                    <el-table :data="initDataObj.attrs" border style="width: 100%">
+                        <el-table-column prop="name" label="规格名" width="100">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-input placeholder="请输入内容" v-model="initDataObj.attrs[scope.$index].name" v-on:input="input_attr_name(scope.$index)"></el-input>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="items" label="规格值">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-row :gutter="20">
+                                    <el-col type="flex" v-for="(attr_item,attr_index) in scope.row.items" :key="attr_index" :span="6">
+                                        <el-input placeholder="请输入内容" v-model="initDataObj.attrs[scope.$index].items[attr_index]" v-on:input="input_attr_item(scope.$index,attr_index)">
+                                            <template slot="append" style="display: block;">
+                                                <el-button type="danger" v-on:click="remove_attr_item(scope.$index,attr_index)">X</el-button>
+                                            </template>
+                                        </el-input>
+                                    </el-col>
+                                </el-row>
+                                <el-row style="margin-top: 15px;">
+                                    <el-button type="success" v-on:click="add_attr_item(scope.$index,scope.row.items.length)">+</el-button>
+                                </el-row>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="100">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-button type="success" v-on:click="add_attr_name(scope.$index)" v-if="scope.$index==0">添加</el-button>
+                                <el-button type="danger" v-on:click="remove_attr_name(scope.$index)" v-else>移除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+
+                    <el-table :data="initDataObj.sku" border style="width: 100%;margin-top: 15px;">
+                        <el-table-column :label="item.name" v-for="(item,index) in initDataObj.attrs" :key="index">
+                            <template slot-scope="scope">@{{scope.row.name}}</template>
+                        </el-table-column>
+                        <el-table-column prop="icon" label="图片">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-upload class="avatar-uploader" action="https://jsonplaceholder.typicode.com/posts/"
+                                        :show-file-list="false"
+                                        :on-success="handleAvatarSuccess"
+                                        :before-upload="beforeAvatarUpload">
+                                    <img v-if="initDataObj.sku[scope.$index].icon" :src="initDataObj.sku[scope.$index].icon" class="avatar">
+                                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                                </el-upload>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="original_price" label="原价">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-input placeholder="请输入内容" v-model="initDataObj.sku[scope.$index].original_price"></el-input>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="sale_price" label="促销价">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-input placeholder="请输入内容" v-model="initDataObj.sku[scope.$index].sale_price"></el-input>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="proxy_price" label="代理价">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-input placeholder="请输入内容" v-model="initDataObj.sku[scope.$index].proxy_price"></el-input>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="stock_count" label="库存">
+                            <template slot-scope="scope" style="display: block;">
+                                <el-input placeholder="请输入内容" v-model="initDataObj.sku[scope.$index].stock_count"></el-input>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-row>
+                <div class="input-group">
+                    <input type="hidden" name="{{$name}}" :value="JSON.stringify(initDataObj)" class="form-control title" placeholder="{{$label}}">
+                </div>
+            </div>
+        </div>
+        @include('admin::form.help-block')
+    </div>
+</div>
+<script>
+new Vue({
+    el: "#{{$name}}-wrapper",
+    data(){
+        return {
+            initDataStr:'{!!old($column, $value) ?? '{"types":"single","attrs":[],"sku":[]}'!!} ',
+            initDataObj:{},
+        };
+    },
+    mounted(){
+        console.log(SkuForm);
+        this.initDataObj = JSON.parse(this.initDataStr);
+    },
+    methods:{
+        singleFormat(){
+            this.initDataObj.types = 'single'
+        },
+        manyFormat(){
+            this.initDataObj.types = 'many';
+            if (this.initDataObj.attrs.length <= 0){
+                this.initDataObj.attrs = [{
+                    name:"示例名",items:["示例值"]
+                }];
+                this.initDataObj.sku.push({attr_index:0,items_index:0,name:"示例值",icon:"",original_price:"",sale_price:"",proxy_price:"",stock_count:""})
+            }
+        },
+        add_attr_name(index){
+            this.initDataObj.attrs.push({name:"示例名",items:["示例值"]});
+        },
+        remove_attr_name(row_index){
+            this.initDataObj.attrs.splice(row_index, 1);
+            var skuData = this.initDataObj.sku;
+            skuData.forEach((item,index) => {
+                if (item.attr_index == row_index){
+                    this.initDataObj.sku.splice(index,1);
+                }
+            })
+        },
+        add_attr_item(row_index,items_index){
+            this.initDataObj.attrs[row_index].items.push(this.attr_item_name);
+            this.initDataObj.sku.push({
+                attr_index:row_index,
+                items_index:items_index,
+                name:this.attr_item_name,
+                icon:"",original_price:"",sale_price:"",proxy_price:"",stock_count:""
+            })
+        },
+        remove_attr_item(row_index,items_index){
+            if (this.initDataObj.attrs[row_index].items.length-1 <= 0){
+                return this.$message.error('最后一项不可删除');
+            }
+            this.initDataObj.attrs[row_index].items.splice(items_index, 1);
+            var skuData = this.initDataObj.sku;
+            skuData.forEach((item,index) => {
+                if (item.items_index == items_index){
+                    this.initDataObj.sku.splice(index,1);
+                }
+            })
+        },
+        input_attr_name(e){
+            console.log(e);
+        },
+        input_attr_item(row_index,item_index){
+            var skuData = this.initDataObj.sku;
+            skuData.forEach((item,index) => {
+                if (item.attr_index == row_index && item.items_index == item_index){
+                    this.initDataObj.sku[index].name = this.initDataObj.attrs[row_index].items[item_index];
+                }
+            })
+        },
+        handleAvatarSuccess(){
+
+        },
+        beforeAvatarUpload(){
+
+        }
+    }
+})
+</script>
