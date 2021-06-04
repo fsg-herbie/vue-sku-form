@@ -46,13 +46,21 @@
                         <el-table-column v-for="(item,structure_index) in initDataObj.structure" :key="'structure_key_'+structure_index" :label="item.label" :prop="item.name" align="center" :resizable="false">
                             <template slot-scope="scope" style="display: block;">
                                 <el-input v-if="item.type == 'input'" :placeholder="`请填写${item.label}`" v-model="skuData[scope.$index][item.name]" v-on:input="updateSkuData(0,[])" size="small" />
-                                <div class="image-upload-container" v-if="item.type == 'image'">
+                                <div class="image-upload-container" v-else>
                                     <el-image v-if="skuData[scope.$index].image" :src="skuData[scope.$index].image" :preview-src-list="[skuData[scope.$index].image]" fit="cover" title="点击预览" />
                                     <el-upload :show-file-list="false" action="{{ route('vue_sku_from.upload') }}" :headers="{{ json_encode(['X-CSRF-TOKEN'=>csrf_token()])}}" name="vue_sku_form_image" :on-success="res => imageUpload(res,scope)" class="images-upload">
                                         <el-button size="small" icon="el-icon-upload2">@{{ skuData[scope.$index].image ? '重新上传' : '上传图片' }}</el-button>
                                     </el-upload>
                                 </div>
                             </template>
+                        </el-table-column>
+                    </el-table>
+                    <!-- 批量设置，当 sku 数超过 2 个时出现 -->
+                    <el-table v-if="skuData.length > 2" :data="[{}]" :show-header="false" border style="width: 100%;">
+                        <el-table-column :width="initDataObj.attribute.length * 120" align="center" :resizable="false">批量设置</el-table-column>
+                        <el-table-column v-for="(item, index) in initDataObj.structure" :key="`batch-structure-${index}`" align="center" :resizable="false" min-width="120px">
+                            <el-input v-if="item.type == 'input'" v-model="batch[item.name]" :placeholder="`批量设置${item.label}`" size="small" v-on:input="onBatchSet(item.name)" />
+                            <div v-else>@{{ item.label }}</div>
                         </el-table-column>
                     </el-table>
                 </el-row>
@@ -71,7 +79,8 @@ new Vue({
         return {
             initDataStr:'{!! empty(old($column, $value)) ? config('vue_sku_form.initDataStr') : old($column, $value) !!} ',
             initDataObj:{},
-            skuData:[]
+            skuData:[],
+            batch: {}
         };
     },
     mounted(){
@@ -171,7 +180,18 @@ new Vue({
                 this.skuData = dataTemp;
                 this.initDataObj.sku = this.skuData;
             }
-        }
+        },
+        arraySpanMethod({row,column,rowIndex,columnIndex}) {
+            if (columnIndex!=0){
+                return [1,1]
+            }
+            return [1, this.initDataObj.attribute.length];
+        },
+        onBatchSet(type) {
+            this.skuData.forEach(v => {
+                v[type] = this.batch[type]
+            })
+        },
     }
 });
 </script>
