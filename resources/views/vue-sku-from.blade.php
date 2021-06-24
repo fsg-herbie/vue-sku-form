@@ -42,7 +42,7 @@
                     </el-table>
 
                     <el-table :data="skuData" border style="width: 100%;margin-top: 15px;">
-                        <el-table-column v-for="(attr, index) in initDataObj.attribute" :key="`attribute-${index}`" :label="attr.name" :prop="attr.name" width="120" align="center" :resizable="false"/>
+                        <el-table-column v-for="(attr, index) in initDataObj.attribute" :key="`attribute-${index}`" :label="attr.name" :prop="attr.items" width="120" align="center" :resizable="false"/>
                         <el-table-column v-for="(item,structure_index) in initDataObj.structure" :key="'structure_key_'+structure_index" :label="item.label" :prop="item.name" align="center" :resizable="false">
                             <template slot-scope="scope" style="display: block;">
                                 <el-input v-if="item.type == 'input'" :placeholder="`请填写${item.label}`" v-model="skuData[scope.$index][item.name]" v-on:input="updateSkuData(0,[])" size="small" />
@@ -77,7 +77,7 @@ new Vue({
     el: "#{{$name}}-wrapper",
     data(){
         return {
-            initDataStr:'{!! empty(old($column, $value)) ? config('vue_sku_form.initDataStr') : old($column, $value) !!} ',
+            initDataStr:'{!! empty(old($column, $value)) ? json_encode(config('vue_sku_form.initDataStr')) : old($column, $value) !!}',
             initDataObj:{},
             skuData:[],
             batch: {}
@@ -115,7 +115,7 @@ new Vue({
             this.updateSkuData();
         },
         input_attr_name(attribute_index){
-            this.updateSkuData();
+            //this.updateSkuData();
         },
         //添加规格值
         add_attr_item(attribute_index){

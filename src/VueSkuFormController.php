@@ -3,12 +3,23 @@
 namespace FsgHerbie\VueSkuForm;
 
 use Encore\Admin\Layout\Content;
+use Encore\MediaSelector\RestApi\Helpers\ApiResponse;
+use Encore\MediaSelector\RestApi\Helpers\ResourcesMedia;
+use Encore\MediaSelector\RestApi\Services\MediaService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 use Qiniu\Auth;
 
 class VueSkuFormController extends Controller {
+
+    use ApiResponse;
+
+    protected $mediaService;
+
+    public function __construct(MediaService $mediaService){
+        $this->mediaService = $mediaService;
+    }
 
     /**
      * 上传小于规定大小的文件
@@ -17,22 +28,26 @@ class VueSkuFormController extends Controller {
      */
     public function upload ( Request $request ) {
 
-        $dirPath = date('Y_m_d',time());
         try{
-            $file = $request->file('vue_sku_form_image');
-            if (!in_array($file->extension(),explode(",",config('vue_sku_form.default.extensions')))) {
-                return $this->returnResult(["status" => 0,"msg" => "不支持该图片格式！"]);
-            }
+            $media_obj = $this->mediaService->upload(
+                0,
+                $request->file('vue_sku_form_image'),
+                "image",
+                json_decode(json_encode(["dir" => "sku","fileNameIsEncrypt" => true]))
+            );
+
+            $data = ResourcesMedia::make($media_obj);
             
-            if (!$file->isValid()){
-                return  $this->returnResult(["status" => 0,"msg" => "图片上传失败"]);
-            }
-            //保存图片
-            $path = $file->store($dirPath,config('vue_sku_form.default.disk'));
-            return $this->returnResult(["status" => 1,"msg" => "图片上传成功！","url" => Storage::url($path)]);
+            return $this->returnResult([
+                "status" => 1,
+                "msg" => "图片上传成功！",
+                "url" => Storage::url($data->path)
+            ]);
+            
         }catch (\Exception $exception){
             return $this->returnResult(["status" => 0,"msg" => "图片上传失败" . $exception->getMessage()]);
         }
+        
     }
 
     public function returnResult($data) {
